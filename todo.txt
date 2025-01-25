@@ -1,0 +1,12 @@
+
+
+
+
+TO DO:
+
+- input file: XML
+- termophysical properties in one big file and estimation of AA,BB,CC,DD base on it
+- do order with floating point precision streams
+- makefile
+
+

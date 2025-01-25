@@ -1,0 +1,33 @@
+# new case? 0-old, 1-new
+0
+# if old case: filename
+results/_20000.wlk
+# new case: grid 0-one file, 1-two files (x,y), 2-uniform squre grid followed by NX and NY
+# the number is followed by filename
+0 input/rad.dat
+# number of interations, number of inner iterations (pressure)
+2000 50
+# relaxation factor for pressure correction (best: between 1.7-2.0)
+1.7
+# is the case dimensional? 0-no, 1-yes
+1
+# AA (pressure term), BB (viscous term), CC (gravity term), DD (therm.diffus). T_0 
+# nondimensional: AA=1.0, BB=Pr, CC=Pr*Ra, DD=1.0, T_0=0
+#    dimensional: AA=1/rho, BB=mu/rho, CC=g*beta, DD=alpha=k/(rho*cp), T_0=temp_ref
+0.001002 0.000001005 0.0206 0.000000144 290.0
+# time step [s] or non-dimensional
+0.0001
+
+
+# CASE DESCRIPTION:
+# natural convection of water
+
+
+rho=998.2
+cp=4182.0
+alpha=0.6
+mu=0.001003
+beta=0.00021
+#    dimensional: AA=1/rho, BB=mu/rho, CC=g*beta, DD=alpha=k/(rho*cp), T_0=temp_ref
+0.001002 0.000001005 0.00206 0.000000144 290.0
+

@@ -1,0 +1,281 @@
+
+#define momentum_adv 3
+
+void calculate_velocity()
+{
+   int i,j;
+
+   double xksi, yksi, xeta, yeta;
+   double pksi, peta;
+   double alpha, beta, gamma, sigma, tau;
+   double uksiksi, uksieta, uetaeta;
+   double xksiksi, xksieta, xetaeta;
+   double yksiksi, yksieta, yetaeta;
+   double vksiksi, vksieta, vetaeta;
+
+   // u component
+   for (i=1; i<NX; i++)
+   {
+      for (j=1; j<=NY; j++)
+      {
+         //+
+         xksi = ( (x(i+1,j)+x(i+1,j-1))-(x(i-1,j)+x(i-1,j-1)) ) / (4*dksi);
+         yksi = ( (y(i+1,j)+y(i+1,j-1))-(y(i-1,j)+y(i-1,j-1)) ) / (4*dksi); 
+         //+         
+         xeta = ( x(i,j)-x(i,j-1) ) / deta;
+         yeta = ( y(i,j)-y(i,j-1) ) / deta;
+
+         double J_u = jaceu(i,j); //xksi*yeta - xeta*yksi;
+
+#include "hsmac_momentum_pressure_x.hpp"
+
+         // FUX = u * (y_eta*u_ksi-y_ksi*u_eta) / J                  
+         double uksi = ( uo(i+1,j)-uo(i-1,j) ) / (2.0f*dksi);
+         double ueta = ( uo(i,j+1)-uo(i,j-1) ) / (2.0f*deta);
+         //double FUX = uo(i,j) * ( yeta*uksi-yksi*ueta ) / J_u;
+
+         // FUV = v * (x_ksi*u_eta-x_eta*u_ksi) / J
+         //double FUY = ( (vo(i,j)+vo(i+1,j)+vo(i,j-1)+vo(i+1,j-1))/4.0f ) * ( xksi*ueta-xeta*uksi ) / J_u;
+
+////////// UPWIND UPWIND UPWIND UPWIND UPWIND UPWIND UPWIND UPWIND UPWIND UPWIND UPWIND UPWIND
+//double o1,o2;
+
+/*
+// FUX
+if ( uo(i,j)>0.0f ) 
+{
+  o1 = ( uo(i,j)-uo(i-1,j) ) / dksi; 
+  o2 = ( ( (uo(i,j+1)+uo(i-1,j+1))-(uo(i,j-1)+uo(i-1,j-1)) ) * 4*deta );
+} 
+else 
+{
+  o1 = ( uo(i+1,j)-uo(i,j) ) / dksi; 
+  o2 = ( ( (uo(i+1,j+1)+uo(i,j+1))-(uo(i+1,j-1)+uo(i,j-1)) ) * 4*deta );
+}
+//double FUX = 1/J_u * (yeta * uo(i,j) * o1 - yksi * uo(i,j) * o2);
+//FUX = 1/J_u * (yeta * uo(i,j) * o1 - yksi * uo(i,j) * o2);
+FUX = 1/J_u * (yeta * uo(i,j) * o1 - yksi * uo(i,j) * ueta);
+
+// FUY
+double vv;
+vv = (vo(i,j)+vo(i+1,j)+vo(i,j-1)+vo(i+1,j-1)) / 4.0f;
+if (vv > 0.0f) 
+{
+  o1 = ( uo(i,j)-uo(i,j-1) ) / deta;
+  o2 = ( ( (uo(i+1,j)+uo(i+1,j-1))-(uo(i-1,j)+uo(i-1,j-1)) ) / 4*dksi );
+} 
+else 
+{
+  o1 = ( uo(i,j+1)-uo(i,j) ) / deta;
+  o2 = ( ( (uo(i+1,j+1)+uo(i+1,j))-(uo(i-1,j+1)+uo(i-1,j)) ) / 4*dksi );
+}
+//double FUY = 1/J_u * (xksi * vv * o1 - xeta * vv * o2);
+//FUY = 1/J_u * (xksi * vv * o1 - xeta * vv * o2);
+FUY = 1/J_u * (xksi * vv * o1 - xeta * vv * uksi);
+*/
+////////// UPWIND UPWIND UPWIND UPWIND UPWIND UPWIND UPWIND UPWIND UPWIND UPWIND UPWIND UPWIND
+
+////////// UTOPIA UTOPIA UTOPIA UTOPIA UTOPIA UTOPIA UTOPIA UTOPIA UTOPIA UTOPIA UTOPIA UTOPIA 
+
+
+#if (momentum_adv == 2)
+	#include "hsmac_momentum_utopia_x.hpp"
+#endif
+
+#if (momentum_adv == 3)
+	#include "hsmac_momentum_utopia_x_3.hpp"
+#endif
+
+////////// UTOPIA UTOPIA UTOPIA UTOPIA UTOPIA UTOPIA UTOPIA UTOPIA UTOPIA UTOPIA UTOPIA UTOPIA 
+
+
+       // DIFFU = (BB/J^2) * (alpha*u_ksiksi-2*beta*u_ksieta+gamma*u_etaeta+sigma*u_eta+tau*u_ksi)
+         // OK
+         uksiksi = ( ( (uo(i+1, j )-uo( i , j ))/dksi ) 
+                   - ( (uo( i , j )-uo(i-1, j ))/dksi ) ) / dksi; 
+
+         uetaeta = ( ( (uo( i ,j+1)-uo( i , j ))/(deta) ) 
+                   - ( (uo( i , j )-uo( i ,j-1))/(deta) ) ) / deta;                   
+
+         uksieta = ( ( (uo(i+1,j+1)-uo(i-1,j+1))/(2.0f*dksi) ) 
+                   - ( (uo(i+1,j-1)-uo(i-1,j-1))/(2.0f*dksi) ) ) / (2.0f*deta); 
+
+         xksiksi = ( ( ( (x(i+1,j)+x(i+1,j-1))/2.0f ) - ( (x(i  ,j)+x(i  ,j-1))/2.0f ) ) / dksi 
+                   - ( ( (x(i  ,j)+x(i  ,j-1))/2.0f ) - ( (x(i-1,j)+x(i-1,j-1))/2.0f ) ) / dksi ) / dksi;
+
+         yksiksi = ( ( ( (y(i+1,j)+y(i+1,j-1))/2.0f ) - ( (y(i  ,j)+y(i  ,j-1))/2.0f ) ) / dksi 
+                   - ( ( (y(i  ,j)+y(i  ,j-1))/2.0f ) - ( (y(i-1,j)+y(i-1,j-1))/2.0f ) ) / dksi ) / dksi;
+
+         xetaeta = ( ( (x(i,j+1)-x(i,j)) / deta ) - ( (x(i,j-1)-x(i,j-2)) / deta ) ) / (2.0f*deta);
+         yetaeta = ( ( (y(i,j+1)-y(i,j)) / deta ) - ( (y(i,j-1)-y(i,j-2)) / deta ) ) / (2.0f*deta);
+
+         // moje xksieta = ( ( (x(i+1,j)-x(i+1,j-1)) / deta ) - ( (x(i-1,j)-x(i-1,j-1)) / deta ) ) / (2*dksi);
+xksieta = ( ( (x(i+1,j)-x(i+1,j-1)) / deta ) - ( (x(i-1,j)-x(i-1,j-1)) / deta ) ) / (2*dksi);
+         // moje yksieta = ( ( (y(i+1,j)-y(i+1,j-1)) / deta ) - ( (y(i-1,j)-y(i-1,j-1)) / deta ) ) / (2*dksi);
+yksieta = ( ( (y(i+1,j)-y(i+1,j-1)) / deta ) - ( (y(i-1,j)-y(i-1,j-1)) / deta ) ) / (2*dksi);
+         // OK
+//         xksieta = ( ( ( (x(i  ,j)+x(i+1,j  ))/2.0f ) - ( (x(i  ,j-1)+x(i+1,j-1))/2.0f ) ) / deta 
+//                   - ( ( (x(i  ,j)+x(i-1,j  ))/2.0f ) - ( (x(i  ,j-1)+x(i-1,j-1))/2.0f ) ) / deta ) / dksi;
+         // OK
+//         yksieta = ( ( ( (y(i  ,j)+y(i+1,j  ))/2.0f ) - ( (y(i  ,j-1)+y(i+1,j-1))/2.0f ) ) / deta 
+//                   - ( ( (y(i  ,j)+y(i-1,j  ))/2.0f ) - ( (y(i  ,j-1)+y(i-1,j-1))/2.0f ) ) / deta ) / dksi;
+
+         alpha = xeta*xeta + yeta*yeta;
+         beta  = xksi*xeta + yksi*yeta;
+         gamma = xksi*xksi + yksi*yksi;
+
+         sigma = ( ( alpha*xksiksi-2.0f*beta*xksieta+gamma*xetaeta ) * yksi 
+                 - ( alpha*yksiksi-2.0f*beta*yksieta+gamma*yetaeta ) * xksi ) / J_u;
+
+         tau   = ( ( alpha*yksiksi-2.0f*beta*yksieta+gamma*yetaeta ) * xeta 
+                 - ( alpha*xksiksi-2.0f*beta*xksieta+gamma*xetaeta ) * yeta ) / J_u;
+
+         double DIFFU = (BB/(J_u*J_u)) * (alpha*uksiksi - 2.0f*beta*uksieta + gamma*uetaeta + sigma*ueta + tau*uksi);
+
+         un(i,j) = uo(i,j) + dt * ( PRESSU + DIFFU - FUX - FUY );
+      }
+   }
+
+   // v component
+   for (i=1; i<=NX; i++)
+   {
+      for (j=1; j<NY; j++)
+      {
+         xksi = ( x(i,j)-x(i-1,j) ) / dksi;
+         yksi = ( y(i,j)-y(i-1,j) ) / dksi;
+         xeta = ( (x(i,j+1)+x(i-1,j+1))-(x(i,j-1)+x(i-1,j-1)) ) / (4.0f*deta);
+         yeta = ( (y(i,j+1)+y(i-1,j+1))-(y(i,j-1)+y(i-1,j-1)) ) / (4.0f*deta);
+
+         double J_v = jacnv(i,j); //xksi*yeta - xeta*yksi;
+
+	#include "hsmac_momentum_pressure_y.hpp"
+
+         double vksi = ( vo(i+1,j)-vo(i-1,j) ) / (2.0f*dksi);
+         double veta = ( vo(i,j+1)-vo(i,j-1) ) / (2.0f*deta);
+         // OKOK
+         //double FVX = ( (uo(i,j)+uo(i-1,j)+uo(i,j+1)+uo(i-1,j+1))/4.0f ) * ( yeta*vksi-yksi*veta ) / J_v;
+
+         // OKOK
+         //double FVY = vo(i,j) * ( xksi*veta-xeta*vksi ) / J_v;
+
+////////// UPWIND UPWIND UPWIND UPWIND UPWIND UPWIND UPWIND UPWIND UPWIND UPWIND UPWIND UPWIND
+
+//double o1,o2;
+/*
+
+// FVX
+double uu;
+uu = (uo(i,j)+uo(i,j+1)+uo(i-1,j)+uo(i-1,j+1)) / 4.0f;
+if (uu > 0.0f) 
+{
+  o1 = ( vo(i,j)-vo(i-1,j) ) / dksi;
+  o2 = ( ( (vo(i,j+1)+vo(i-1,j+1))-(vo(i,j-1)+vo(i-1,j-1)) ) / 4*deta );
+} 
+else 
+{
+  o1 = ( vo(i+1,j)-vo(i,j) ) / dksi;
+  o2 = ( ( (vo(i+1,j+1)+vo(i,j+1))-(vo(i+1,j-1)+vo(i,j-1)) ) / 4*deta );
+}
+//double FVX = 1/J_v * (yeta * uu * o1 - yksi * uu * o2);
+//FVX = 1/J_v * (yeta * uu * o1 - yksi * uu * o2);
+FVX = 1/J_v * (yeta * uu * o1 - yksi * uu * veta);
+
+// FVY
+if (vo(i,j) > 0)
+{
+  o1 = ( vo(i,j) - vo(i,j-1) ) / deta;
+  o2 = ( ( (vo(i+1,j)+vo(i+1,j-1))-(vo(i-1,j)+vo(i-1,j-1)) ) / 4*dksi );;
+}
+else
+{
+  o1 = ( vo(i,j+1) - vo(i,j) ) / deta;;
+  o2 = ( ( (vo(i+1,j+1)+vo(i+1,j))-(vo(i-1,j+1)+vo(i-1,j)) ) / 4*dksi );;
+}
+//double FVY = 1/J_v * (xksi * vo(i,j) * o1 - xeta * vo(i,j) * o2);
+//FVY = 1/J_v * (xksi * vo(i,j) * o1 - xeta * vo(i,j) * o2);
+FVY = 1/J_v * (xksi * vo(i,j) * o1 - xeta * vo(i,j) * vksi);
+
+*/
+////////// UPWIND UPWIND UPWIND UPWIND UPWIND UPWIND UPWIND UPWIND UPWIND UPWIND UPWIND UPWIND
+
+
+////////// UTOPIA UTOPIA UTOPIA UTOPIA UTOPIA UTOPIA UTOPIA UTOPIA UTOPIA UTOPIA UTOPIA UTOPIA 
+//// UTOPIA - Uniformly Third Order Polynomial Interpolation Algorithm 
+
+#if (momentum_adv == 2)
+	#include "hsmac_momentum_utopia_y.hpp"
+#endif
+
+#if (momentum_adv == 3)
+	#include "hsmac_momentum_utopia_y_3.hpp"
+#endif
+////////// UTOPIA UTOPIA UTOPIA UTOPIA UTOPIA UTOPIA UTOPIA UTOPIA UTOPIA UTOPIA UTOPIA UTOPIA 
+
+
+         vksiksi = ( ( (vo(i+1, j )-vo( i , j ))/dksi ) 
+                   - ( (vo( i , j )-vo(i-1, j ))/dksi ) ) / dksi; 
+
+         vetaeta = ( ( (vo( i ,j+1)-vo( i , j ))/(deta) ) 
+                   - ( (vo( i , j )-vo( i ,j-1))/(deta) ) ) / deta;                   
+
+//-------------------------------------
+         // moje vksieta = ( ( (vo(i+1,j+1)-vo(i+1,j-1))/(2*deta) ) 
+         // moje          - ( (vo(i-1,j+1)-vo(i-1,j-1))/(2*deta) ) ) / (2*dksi); 
+vksieta = ( ( (vo(i+1,j+1)-vo(i+1,j-1))/(2*deta) ) 
+          - ( (vo(i-1,j+1)-vo(i-1,j-1))/(2*deta) ) ) / (2*dksi); 
+         // OK
+// TUTAJ TUTAJ TUTAJ
+//         vksieta = ( ( (vo(i  ,j+1)+vo(i+1,j+1))/2.0f - (vo(i  ,j-1)+vo(i+1,j-1))/2.0f ) / (2.0f*deta)
+//                   - ( (vo(i-1,j+1)+vo(i  ,j+1))/2.0f - (vo(i-1,j-1)+vo(i,  j-1))/2.0f ) / (2.0f*deta) ) / (2*dksi);
+//-------------------------------------
+
+
+
+         xksiksi = ( ( (x(i+1,j)-x(i,j)) / dksi ) - ( (x(i-1,j)-x(i-2,j)) / dksi ) ) / (2.0f*dksi);
+         yksiksi = ( ( (y(i+1,j)-y(i,j)) / dksi ) - ( (y(i-1,j)-y(i-2,j)) / dksi ) ) / (2.0f*dksi);
+
+         // moje xetaeta = ( ( ( (x(i,j+1)+x(i-1,j+1))/2 ) - ( (x(i  ,j)+x(i-1,j  ))/2 ) ) / deta 
+         // moje          - ( ( (x(i  ,j)+x(i-1,j  ))/2 ) - ( (x(i,j-1)+x(i-1,j-1))/2 ) ) / deta ) / deta;
+xetaeta = ( ( ( (x(i,j+1)+x(i-1,j+1))/2 ) - ( (x(i  ,j)+x(i-1,j  ))/2 ) ) / deta 
+          - ( ( (x(i  ,j)+x(i-1,j  ))/2 ) - ( (x(i,j-1)+x(i-1,j-1))/2 ) ) / deta ) / deta;
+         // moje yetaeta = ( ( ( (y(i,j+1)+y(i-1,j+1))/2 ) - ( (y(i  ,j)+y(i-1,j  ))/2 ) ) / deta 
+         // moje          - ( ( (y(i  ,j)+y(i-1,j  ))/2 ) - ( (y(i,j-1)+y(i-1,j-1))/2 ) ) / deta ) / deta;
+yetaeta = ( ( ( (y(i,j+1)+y(i-1,j+1))/2 ) - ( (y(i  ,j)+y(i-1,j  ))/2 ) ) / deta 
+          - ( ( (y(i  ,j)+y(i-1,j  ))/2 ) - ( (y(i,j-1)+y(i-1,j-1))/2 ) ) / deta ) / deta;
+
+/*
+to jest w zlym punkcie policzone (srodek komorki)
+         // OK 
+         xetaeta = (  (x(i,j+1)+x(i-1,j+1)+x(i  ,j  )+x(i-1,j  ))/4.0f 
+                   -2*(x(i,j  )+x(i-1,j  )+x(i-1,j-1)+x(i  ,j-1))/4.0f
+                     +(x(i,j-1)+x(i-1,j-1)+x(i  ,j-2)+x(i-1,j-2))/4.0f ) / (deta*deta);
+
+         // OK
+         yetaeta = (  (y(i,j+1)+y(i-1,j+1)+y(i  ,j  )+y(i-1,j  ))/4.0f 
+                   -2*(y(i,j  )+y(i-1,j  )+y(i-1,j-1)+y(i  ,j-1))/4.0f
+                     +(y(i,j-1)+y(i-1,j-1)+y(i  ,j-2)+y(i-1,j-2))/4.0f ) / (deta*deta);
+*/
+         xksieta = ( ( (x(i,j+1)-x(i-1,j+1)) / dksi ) - ( (x(i,j-1)-x(i-1,j-1)) / dksi ) ) / (2.0f*deta);
+         yksieta = ( ( (y(i,j+1)-y(i-1,j+1)) / dksi ) - ( (y(i,j-1)-y(i-1,j-1)) / dksi ) ) / (2.0f*deta);
+
+         alpha = xeta*xeta + yeta*yeta;
+         beta  = xksi*xeta + yksi*yeta;
+         gamma = xksi*xksi + yksi*yksi;
+         sigma = ( ( alpha*xksiksi-2*beta*xksieta+gamma*xetaeta ) * yksi 
+                 - ( alpha*yksiksi-2*beta*yksieta+gamma*yetaeta ) * xksi ) / J_v;
+         tau   = ( ( alpha*yksiksi-2*beta*yksieta+gamma*yetaeta ) * xeta 
+                 - ( alpha*xksiksi-2*beta*xksieta+gamma*xetaeta ) * yeta ) / J_v;
+
+         double DIFFV = (BB/(J_v*J_v)) * (alpha*vksiksi - 2.0f*beta*vksieta + gamma*vetaeta + sigma*veta + tau*vksi);
+         
+//         double CONV = CC * ( (to(i,j)+(to(i,j+1)))*0.5 );
+         double CONV = CC * ( (to(i,j)+(to(i,j+1)))*0.5 - T_0);
+
+         vn(i,j) = vo(i,j) + dt * ( PRESSV + DIFFV - FVX - FVY + CONV );
+          
+      }
+   }
+   
+   boundary_velocity();
+}
+

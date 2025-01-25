@@ -1,0 +1,112 @@
+
+
+#define energy_adv 3
+// 1 - central
+// 2 - UTOPIA
+// 3 - UTOPIA 2
+
+void calculate_energy()
+{
+   int i,j;
+
+   double xksi, yksi, xeta, yeta;
+   double tksi, teta;
+   double dif, o1;
+   double alpha, beta, gamma, sigma, tau;
+   double tksiksi, tetaeta, tksieta;
+   double xksiksi, yksiksi, xetaeta, yetaeta, xksieta, yksieta;
+
+   for (i=1; i<=NX; i++)
+   {
+      for (j=1; j<=NY; j++)
+      {
+         xksi = ( (x(i,j)+x(i,j-1)) - (x(i-1,j)+x(i-1,j-1)) ) / (2.0f*dksi);
+         yksi = ( (y(i,j)+y(i,j-1)) - (y(i-1,j)+y(i-1,j-1)) ) / (2.0f*dksi);
+
+         xeta = ( (x(i,j)+x(i-1,j)) - (x(i,j-1)+x(i-1,j-1)) ) / (2.0f*deta);
+         yeta = ( (y(i,j)+y(i-1,j)) - (y(i,j-1)+y(i-1,j-1)) ) / (2.0f*deta);
+
+         double J_t = jacp(i,j); //xksi*yeta - xeta*yksi;
+
+         tksi = ( to(i+1,j)-to(i-1,j) ) / (2.0f*dksi);
+         teta = ( to(i,j+1)-to(i,j-1) ) / (2.0f*deta);
+
+         double ut = ( uo(i,j)+uo(i-1,j) ) / 2.0f;
+         double vt = ( vo(i,j)+vo(i,j-1) ) / 2.0f;
+
+         // calculate FTX, FTY
+
+#if (energy_adv == 1)
+         #include "hsmac_energy_central.hpp"
+#endif
+
+#if (energy_adv == 2)
+         #include "hsmac_energy_utopia.hpp"
+#endif
+
+#if (energy_adv == 3)
+         #include "hsmac_energy_utopia2.hpp"
+#endif
+
+/*
+
+         alpha = xeta*xeta + yeta*yeta;
+         beta  = xksi*xeta + yksi*yeta;
+         gamma = xksi*xksi + yksi*yksi;
+ 
+         tksiksi = ( to(i+1,j)-2.0f*to(i,j)+to(i-1,j) ) / (dksi*dksi);
+         tetaeta = ( to(i,j+1)-2.0f*to(i,j)+to(i,j-1) ) / (deta*deta);
+         tksieta = ( (to(i+1,j+1)-(to(i+1,j-1)))/(2.0f*deta) 
+                   - (to(i-1,j+1)-(to(i-1,j-1)))/(2.0f*deta) ) / (2.0f*dksi);
+
+         xksiksi = ( (((x(i+1,j)+x(i+1,j-1))/2.0f)-((x(i  ,j)+x(i  ,j-1))/2.0f))/dksi
+                    -(((x(i-1,j)+x(i-1,j-1))/2.0f)-((x(i-2,j)+x(i-2,j-1))/2.0f))/dksi ) / (2.0f*dksi);
+         yksiksi = ( (((y(i+1,j)+y(i+1,j-1))/2.0f)-((y(i  ,j)+y(i  ,j-1))/2.0f))/dksi
+                    -(((y(i-1,j)+y(i-1,j-1))/2.0f)-((y(i-2,j)+y(i-2,j-1))/2.0f))/dksi ) / (2.0f*dksi);
+
+         xetaeta = ( (x(i,j+1)+x(i,j  )+x(i-1,j+1)+x(i-1,j  ))/4.0f
+               -2.0f*(x(i,j  )+x(i,j-1)+x(i-1,j  )+x(i-1,j-1))/4.0f
+                    +(x(i,j-1)+x(i,j-2)+x(i-1,j-1)+x(i-1,j-2))/4.0f  ) / (deta*deta);
+
+         yetaeta = ( (y(i,j+1)+y(i,j  )+y(i-1,j+1)+y(i-1,j  ))/4.0f
+               -2.0f*(y(i,j  )+y(i,j-1)+y(i-1,j  )+y(i-1,j-1))/4.0f
+                    +(y(i,j-1)+y(i,j-2)+y(i-1,j-1)+y(i-1,j-2))/4.0f  ) / (deta*deta);
+
+         xksieta = ( (x(i,j)-x(i,j-1))/deta - (x(i-1,j)-x(i-1,j-1))/deta ) / dksi;
+         yksieta = ( (y(i,j)-y(i,j-1))/deta - (y(i-1,j)-y(i-1,j-1))/deta ) / dksi;
+
+         sigma = ( ( alpha*xksiksi-2.0f*beta*xksieta+gamma*xetaeta ) * yksi 
+                 - ( alpha*yksiksi-2.0f*beta*yksieta+gamma*yetaeta ) * xksi ) / J_t;
+
+         tau   = ( ( alpha*yksiksi-2.0f*beta*yksieta+gamma*yetaeta ) * xeta 
+                 - ( alpha*xksiksi-2.0f*beta*xksieta+gamma*xetaeta ) * yeta ) / J_t;
+
+         double DIFT = DD*(1.0f/(J_t*J_t)) * (alpha*tksiksi - 2.0f*beta*tksieta + gamma*tetaeta + sigma*teta + tau*tksi);
+*/
+         double DIFT = DD * (
+                            ( SQR(ap11(i,j))+SQR(ap21(i,j)) )*tksiksi + 
+                            ( SQR(ap12(i,j))+SQR(ap22(i,j)) )*tetaeta +
+                            ( (ap11(i,j)*ap12(i,j)) + (ap21(i,j)*ap22(i,j)) )*tksieta*2.0f );
+
+double da11dksi = (ap11(i+1,j)-ap11(i-1,j))/(2*dksi);
+double da11deta = (ap11(i,j+1)-ap11(i,j-1))/(2*deta);
+double da21dksi = (ap21(i+1,j)-ap21(i-1,j))/(2*dksi);
+double da21deta = (ap21(i,j+1)-ap21(i,j-1))/(2*deta);
+double dax = ap11(i,j)*da11dksi + ap12(i,j)*da11deta + ap21(i,j)*da21dksi + ap22(i,j)*da21deta;
+
+double da12dksi = (ap12(i+1,j)-ap12(i-1,j))/(2*dksi);
+double da12deta = (ap12(i,j+1)-ap12(i,j-1))/(2*deta);
+double da22dksi = (ap22(i+1,j)-ap22(i-1,j))/(2*dksi);
+double da22deta = (ap22(i,j+1)-ap22(i,j-1))/(2*deta);
+double day = ap11(i,j)*da12dksi + ap12(i,j)*da12deta + ap21(i,j)*da22dksi + ap22(i,j)*da22deta;
+
+DIFT += DD * ( tksi*dax + teta*day );
+
+         tn(i,j) = to(i,j) + dt * ( - FTX - FTY + DIFT );
+
+      }
+   }
+
+   boundary_temperature();
+}
+
